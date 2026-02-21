@@ -2,187 +2,168 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KIROS — AI Nutrition Intelligence</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>KIROS Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Inter',sans-serif;
-}
-
 body{
-  min-height:100vh;
-  background:radial-gradient(circle at top left,#1e293b,#0f172a 60%);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  margin:0;
+  font-family:Inter,sans-serif;
+  background:#0f172a;
   color:white;
-  overflow:hidden;
 }
 
-/* Soft animated background glow */
-body::before{
-  content:"";
-  position:absolute;
-  width:600px;
-  height:600px;
-  background:radial-gradient(circle,#2563eb55,transparent 70%);
-  top:-150px;
-  right:-150px;
-  animation:float 8s ease-in-out infinite;
+.sidebar{
+  position:fixed;
+  width:230px;
+  height:100vh;
+  background:#111827;
+  padding:30px;
 }
 
-@keyframes float{
-  0%,100%{transform:translateY(0);}
-  50%{transform:translateY(25px);}
+.sidebar h2{
+  margin-bottom:40px;
 }
 
-/* Main Card */
-.container{
-  position:relative;
-  background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(30px);
-  border:1px solid rgba(255,255,255,0.08);
-  padding:60px;
-  border-radius:28px;
-  width:460px;
-  text-align:center;
-  box-shadow:0 40px 80px rgba(0,0,0,0.6);
-  animation:fadeIn 1s ease forwards;
-}
-
-/* Title */
-h1{
-  font-size:2.3rem;
-  font-weight:800;
-  letter-spacing:-1px;
-  background:linear-gradient(90deg,#60a5fa,#a78bfa);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
-
-.subtitle{
-  margin-top:12px;
-  font-size:0.95rem;
-  color:#94a3b8;
-}
-
-/* Upload */
-.upload{
-  margin-top:40px;
-}
-
-input[type="file"]{
-  background:#1e293b;
+.sidebar button{
+  display:block;
+  width:100%;
+  margin-top:15px;
   padding:10px;
-  border-radius:10px;
+  background:none;
   border:none;
-  color:#cbd5e1;
-  width:100%;
-}
-
-/* Button */
-button{
-  margin-top:22px;
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:14px;
-  background:linear-gradient(90deg,#2563eb,#7c3aed);
-  color:white;
-  font-weight:600;
-  font-size:1rem;
+  color:#94a3b8;
+  text-align:left;
   cursor:pointer;
-  transition:all 0.3s ease;
+  font-size:15px;
 }
 
-button:hover{
-  transform:translateY(-3px);
-  box-shadow:0 15px 35px rgba(124,58,237,0.4);
+.sidebar button:hover{
+  color:white;
 }
 
-/* Result */
-.result{
-  margin-top:30px;
-  padding:22px;
-  border-radius:18px;
-  background:rgba(37,99,235,0.15);
-  border:1px solid rgba(255,255,255,0.08);
-  opacity:0;
-  transform:translateY(20px);
-  transition:0.4s ease;
+.main{
+  margin-left:250px;
+  padding:40px;
 }
 
-.result.show{
-  opacity:1;
-  transform:translateY(0);
+.section{
+  display:none;
 }
 
-.food{
-  font-weight:600;
-  font-size:1.2rem;
+.active{
+  display:block;
 }
 
-.calories{
-  margin-top:8px;
-  color:#cbd5e1;
-}
-
-/* Animation */
-@keyframes fadeIn{
-  from{opacity:0; transform:translateY(40px);}
-  to{opacity:1; transform:translateY(0);}
+.card{
+  background:#1e293b;
+  padding:30px;
+  border-radius:15px;
+  margin-top:20px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <h1>KIROS</h1>
-  <div class="subtitle">AI-powered nutrition intelligence</div>
-
-  <div class="upload">
-    <input type="file" id="imageInput">
-    <button onclick="uploadImage()">Analyze Food</button>
-  </div>
-
-  <div class="result" id="resultBox"></div>
+<div class="sidebar">
+  <h2>KIROS</h2>
+  <button onclick="showSection('dashboard')">Dashboard</button>
+  <button onclick="showSection('scan')">Scan Food</button>
+  <button onclick="showSection('workout')">Workout Plan</button>
 </div>
 
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="section active">
+    <h1>Today’s Overview</h1>
+    <div class="card">
+      <h3>Calories Today</h3>
+      <p>0 kcal</p>
+    </div>
+  </div>
+
+  <!-- SCAN FOOD -->
+  <div id="scan" class="section">
+    <h1>Scan Food</h1>
+    <input type="file" id="imageInput">
+    <img id="preview" width="250">
+    <br><br>
+    <button onclick="predict()">Analyze</button>
+    <div id="result"></div>
+  </div>
+
+  <!-- WORKOUT -->
+  <div id="workout" class="section">
+    <h1>Workout Plan</h1>
+    <button onclick="loadWorkout('leg')">Leg Day</button>
+    <button onclick="loadWorkout('chest')">Chest Day</button>
+
+    <div id="workoutResult" class="card"></div>
+  </div>
+
+</div>
+
+<!-- TensorFlow -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
 <script>
-async function uploadImage(){
-  const fileInput = document.getElementById("imageInput");
-  const file = fileInput.files[0];
-
-  if(!file){
-    alert("Please select an image");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("image", file);
-
-  const res = await fetch("http://localhost:5000/analyze",{
-    method:"POST",
-    body:formData
+function showSection(id){
+  document.querySelectorAll(".section").forEach(sec=>{
+    sec.classList.remove("active");
   });
+  document.getElementById(id).classList.add("active");
+}
 
-  const data = await res.json();
+/* AI Model */
+let model;
+async function loadModel(){
+  model = await mobilenet.load();
+  console.log("Model Loaded");
+}
+loadModel();
 
-  const resultBox = document.getElementById("resultBox");
-  resultBox.classList.add("show");
-  resultBox.innerHTML = `
-    <div class="food">Detected: ${data.food}</div>
-    <div class="calories">Estimated Calories: ${data.calories} kcal</div>
-  `;
+document.getElementById("imageInput").addEventListener("change", function(event){
+  const reader = new FileReader();
+  reader.onload = function(){
+    document.getElementById("preview").src = reader.result;
+  }
+  reader.readAsDataURL(event.target.files[0]);
+});
+
+async function predict(){
+  const img = document.getElementById("preview");
+  const predictions = await model.classify(img);
+  document.getElementById("result").innerText =
+    "Detected: " + predictions[0].className;
+}
+
+/* Workout Engine */
+const workoutPlans = {
+  leg:[
+    {name:"Squats", sets:4, reps:"8-10"},
+    {name:"Leg Press", sets:3, reps:"10-12"},
+    {name:"Hamstring Curl", sets:3, reps:"12-15"},
+    {name:"Calf Raises", sets:4, reps:"15-20"}
+  ],
+  chest:[
+    {name:"Bench Press", sets:4, reps:"6-8"},
+    {name:"Incline Dumbbell Press", sets:3, reps:"8-12"},
+    {name:"Cable Fly", sets:3, reps:"12-15"}
+  ]
+};
+
+function loadWorkout(day){
+  let output="";
+  workoutPlans[day].forEach(ex=>{
+    output += `<strong>${ex.name}</strong><br>
+               ${ex.sets} sets × ${ex.reps} reps<br><br>`;
+  });
+  document.getElementById("workoutResult").innerHTML = output;
 }
 </script>
-  <script src='https://www.noupe.com/embed/01983a7c61f7796895c23c4d4f7d4a145a00.js'></script>
 
 </body>
 </html>
