@@ -2,23 +2,21 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>KIROS AI Experience</title>
+<title>KIROS — AI Future</title>
 <style>
 body{
   margin:0;
-  background:#05070d;
+  background:radial-gradient(circle at 30% 30%, #0f172a, #05070d 70%);
   overflow-x:hidden;
   font-family:Inter, sans-serif;
   color:white;
 }
-
 canvas{
   position:fixed;
   top:0;
   left:0;
   z-index:-1;
 }
-
 .section{
   height:100vh;
   display:flex;
@@ -26,14 +24,12 @@ canvas{
   align-items:center;
   text-align:center;
 }
-
 h1{
   font-size:4rem;
   background:linear-gradient(90deg,#00c6ff,#7c3aed);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
 }
-
 .glass{
   background:rgba(255,255,255,0.05);
   backdrop-filter:blur(20px);
@@ -43,8 +39,8 @@ h1{
 }
 .cursor-glow{
   position:fixed;
-  width:120px;
-  height:120px;
+  width:150px;
+  height:150px;
   border-radius:50%;
   pointer-events:none;
   background:radial-gradient(circle,#7c3aed55,transparent 70%);
@@ -68,7 +64,7 @@ h1{
 </div>
 
 <div class="section">
-  <h1>Powered by AI Vision</h1>
+  <h1>Powered by Vision AI</h1>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -76,49 +72,82 @@ h1{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
 <script>
-// THREE SETUP
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Premium Geometry
-const geometry = new THREE.TorusKnotGeometry(1.5,0.5,200,32);
-const material = new THREE.MeshStandardMaterial({
+/* MAIN GLOWING OBJECT */
+const geometry = new THREE.TorusKnotGeometry(1.5,0.4,300,32);
+const material = new THREE.MeshPhysicalMaterial({
   color:0x7c3aed,
   metalness:1,
-  roughness:0.1
+  roughness:0,
+  clearcoat:1,
+  emissive:0x220066,
+  emissiveIntensity:0.8
 });
-const object = new THREE.Mesh(geometry, material);
-scene.add(object);
+const mainObject = new THREE.Mesh(geometry, material);
+scene.add(mainObject);
 
-const light = new THREE.PointLight(0xffffff,1.5);
-light.position.set(5,5,5);
-scene.add(light);
+/* LIGHTING */
+const light1 = new THREE.PointLight(0xffffff,2);
+light1.position.set(5,5,5);
+scene.add(light1);
 
-camera.position.z = 5;
+const light2 = new THREE.PointLight(0x7c3aed,2);
+light2.position.set(-5,-5,5);
+scene.add(light2);
 
-// Mouse Follow
-document.addEventListener("mousemove",(e)=>{
-  let x = (e.clientX / window.innerWidth - 0.5) * 2;
-  let y = (e.clientY / window.innerHeight - 0.5) * 2;
-  object.rotation.y = x * 1.5;
-  object.rotation.x = y * 1.5;
+camera.position.z = 6;
+
+/* PARTICLE FIELD */
+const particlesGeometry = new THREE.BufferGeometry();
+const particleCount = 2000;
+const positions = new Float32Array(particleCount * 3);
+
+for(let i=0;i<particleCount*3;i++){
+  positions[i] = (Math.random() - 0.5) * 30;
+}
+
+particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions,3));
+const particlesMaterial = new THREE.PointsMaterial({
+  size:0.03,
+  color:0xffffff
 });
+const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+scene.add(particles);
 
-// Cursor Glow
+/* FLOATING MINI OBJECTS */
+for(let i=0;i<5;i++){
+  const geo = new THREE.SphereGeometry(0.3,32,32);
+  const mat = new THREE.MeshStandardMaterial({color:0x00c6ff});
+  const mesh = new THREE.Mesh(geo,mat);
+  mesh.position.set((Math.random()-0.5)*10,(Math.random()-0.5)*10,(Math.random()-0.5)*5);
+  scene.add(mesh);
+}
+
+/* CURSOR GLOW */
 const glow = document.getElementById("cursorGlow");
 document.addEventListener("mousemove",(e)=>{
   glow.style.left = e.clientX + "px";
   glow.style.top = e.clientY + "px";
 });
 
-// Scroll Animation
+/* MOUSE INTERACTION */
+document.addEventListener("mousemove",(e)=>{
+  let x = (e.clientX/window.innerWidth - 0.5) * 2;
+  let y = (e.clientY/window.innerHeight - 0.5) * 2;
+  mainObject.rotation.y = x * 1.5;
+  mainObject.rotation.x = y * 1.5;
+});
+
+/* SCROLL CAMERA CINEMATIC */
 gsap.registerPlugin(ScrollTrigger);
 
-gsap.to(object.rotation,{
-  y:6,
+gsap.to(camera.position,{
+  z:3,
   scrollTrigger:{
     trigger:"body",
     start:"top top",
@@ -127,15 +156,16 @@ gsap.to(object.rotation,{
   }
 });
 
-// Animate
+/* ANIMATION LOOP */
 function animate(){
   requestAnimationFrame(animate);
-  object.rotation.z += 0.003;
+  mainObject.rotation.z += 0.002;
+  particles.rotation.y += 0.0008;
   renderer.render(scene,camera);
 }
 animate();
 
-// Resize
+/* RESIZE */
 window.addEventListener("resize",()=>{
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth/window.innerHeight;
