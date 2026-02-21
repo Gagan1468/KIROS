@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KIROS AI Food Scanner</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<title>KIROS — AI Nutrition Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 *{
@@ -16,67 +16,105 @@
 
 body{
   min-height:100vh;
-  background:linear-gradient(135deg,#0f172a,#1e293b);
+  background:radial-gradient(circle at top left,#1e293b,#0f172a 60%);
   display:flex;
   align-items:center;
   justify-content:center;
   color:white;
+  overflow:hidden;
 }
 
-/* Glass Card */
+/* Soft animated background glow */
+body::before{
+  content:"";
+  position:absolute;
+  width:600px;
+  height:600px;
+  background:radial-gradient(circle,#2563eb55,transparent 70%);
+  top:-150px;
+  right:-150px;
+  animation:float 8s ease-in-out infinite;
+}
+
+@keyframes float{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(25px);}
+}
+
+/* Main Card */
 .container{
-  background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(20px);
-  padding:50px;
-  border-radius:25px;
-  width:420px;
+  position:relative;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(30px);
+  border:1px solid rgba(255,255,255,0.08);
+  padding:60px;
+  border-radius:28px;
+  width:460px;
   text-align:center;
-  box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  box-shadow:0 40px 80px rgba(0,0,0,0.6);
   animation:fadeIn 1s ease forwards;
 }
 
+/* Title */
 h1{
-  font-size:2rem;
+  font-size:2.3rem;
   font-weight:800;
+  letter-spacing:-1px;
+  background:linear-gradient(90deg,#60a5fa,#a78bfa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
 }
 
-p{
-  margin-top:10px;
-  color:#cbd5e1;
+.subtitle{
+  margin-top:12px;
   font-size:0.95rem;
+  color:#94a3b8;
+}
+
+/* Upload */
+.upload{
+  margin-top:40px;
 }
 
 input[type="file"]{
-  margin-top:30px;
-  color:white;
+  background:#1e293b;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  color:#cbd5e1;
+  width:100%;
 }
 
+/* Button */
 button{
-  margin-top:20px;
-  padding:12px 30px;
+  margin-top:22px;
+  width:100%;
+  padding:14px;
   border:none;
-  border-radius:12px;
-  background:#2563eb;
+  border-radius:14px;
+  background:linear-gradient(90deg,#2563eb,#7c3aed);
   color:white;
   font-weight:600;
+  font-size:1rem;
   cursor:pointer;
-  transition:0.3s;
+  transition:all 0.3s ease;
 }
 
 button:hover{
-  background:#1d4ed8;
-  transform:scale(1.05);
+  transform:translateY(-3px);
+  box-shadow:0 15px 35px rgba(124,58,237,0.4);
 }
 
-/* Result Card */
+/* Result */
 .result{
   margin-top:30px;
-  padding:20px;
-  border-radius:15px;
+  padding:22px;
+  border-radius:18px;
   background:rgba(37,99,235,0.15);
+  border:1px solid rgba(255,255,255,0.08);
   opacity:0;
   transform:translateY(20px);
-  transition:0.4s;
+  transition:0.4s ease;
 }
 
 .result.show{
@@ -84,6 +122,17 @@ button:hover{
   transform:translateY(0);
 }
 
+.food{
+  font-weight:600;
+  font-size:1.2rem;
+}
+
+.calories{
+  margin-top:8px;
+  color:#cbd5e1;
+}
+
+/* Animation */
 @keyframes fadeIn{
   from{opacity:0; transform:translateY(40px);}
   to{opacity:1; transform:translateY(0);}
@@ -94,12 +143,13 @@ button:hover{
 <body>
 
 <div class="container">
-  <h1>🍽 KIROS</h1>
-  <p>AI-powered food recognition & calorie tracking</p>
+  <h1>KIROS</h1>
+  <div class="subtitle">AI-powered nutrition intelligence</div>
 
-  <input type="file" id="imageInput">
-  <br>
-  <button onclick="uploadImage()">Analyze Food</button>
+  <div class="upload">
+    <input type="file" id="imageInput">
+    <button onclick="uploadImage()">Analyze Food</button>
+  </div>
 
   <div class="result" id="resultBox"></div>
 </div>
@@ -108,6 +158,11 @@ button:hover{
 async function uploadImage(){
   const fileInput = document.getElementById("imageInput");
   const file = fileInput.files[0];
+
+  if(!file){
+    alert("Please select an image");
+    return;
+  }
 
   const formData = new FormData();
   formData.append("image", file);
@@ -122,13 +177,12 @@ async function uploadImage(){
   const resultBox = document.getElementById("resultBox");
   resultBox.classList.add("show");
   resultBox.innerHTML = `
-    <h3>Detected: ${data.food}</h3>
-    <p>Calories: ${data.calories} kcal</p>
+    <div class="food">Detected: ${data.food}</div>
+    <div class="calories">Estimated Calories: ${data.calories} kcal</div>
   `;
 }
 </script>
   <script src='https://www.noupe.com/embed/01983a7c61f7796895c23c4d4f7d4a145a00.js'></script>
 
 </body>
-
 </html>
