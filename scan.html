@@ -1,9 +1,45 @@
-<video id="video" autoplay></video>
-<button onclick="startCamera()">Start Camera</button>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scan Food</title>
+</head>
 
-<script>
-async function startCamera(){
-  const stream = await navigator.mediaDevices.getUserMedia({video:true});
-  document.getElementById("video").srcObject = stream;
-}
-</script>
+<body>
+
+  <input type="file" id="imageInput">
+  <img id="preview" width="250">
+  <button onclick="predict()">Analyze</button>
+
+  <div id="result"></div>
+
+  <!-- 👇 YAHAN ADD KARO -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
+  <script>
+    let model;
+
+    async function loadModel(){
+      model = await mobilenet.load();
+      console.log("Model Loaded");
+    }
+    loadModel();
+
+    document.getElementById("imageInput").addEventListener("change", function(event){
+      const reader = new FileReader();
+      reader.onload = function(){
+        document.getElementById("preview").src = reader.result;
+      }
+      reader.readAsDataURL(event.target.files[0]);
+    });
+
+    async function predict(){
+      const img = document.getElementById("preview");
+      const predictions = await model.classify(img);
+      document.getElementById("result").innerText =
+        "Detected: " + predictions[0].className;
+    }
+  </script>
+
+</body>
+</html>
