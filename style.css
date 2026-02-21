@@ -41,3 +41,32 @@ body{
   color:white;
   cursor:pointer;
 }
+
+.sidebar{
+  position:fixed;
+  width:220px;
+  height:100vh;
+  background:#0f172a;
+  padding:30px;
+  color:white;
+}
+
+.sidebar a{
+  display:block;
+  margin-top:20px;
+  color:#94a3b8;
+  text-decoration:none;
+}
+
+.main{
+  margin-left:240px;
+  padding:40px;
+}
+
+.card{
+  background:#1e293b;
+  padding:30px;
+  border-radius:20px;
+  margin-top:20px;
+  color:white;
+}
