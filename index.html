@@ -2,167 +2,106 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>KIROS Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-
+<title>KIROS 3D Experience</title>
 <style>
 body{
   margin:0;
-  font-family:Inter,sans-serif;
-  background:#0f172a;
-  color:white;
+  overflow:hidden;
+  background:black;
 }
 
-.sidebar{
-  position:fixed;
-  width:230px;
-  height:100vh;
-  background:#111827;
-  padding:30px;
-}
-
-.sidebar h2{
-  margin-bottom:40px;
-}
-
-.sidebar button{
-  display:block;
-  width:100%;
-  margin-top:15px;
-  padding:10px;
-  background:none;
-  border:none;
-  color:#94a3b8;
-  text-align:left;
-  cursor:pointer;
-  font-size:15px;
-}
-
-.sidebar button:hover{
-  color:white;
-}
-
-.main{
-  margin-left:250px;
-  padding:40px;
-}
-
-.section{
-  display:none;
-}
-
-.active{
+canvas{
   display:block;
 }
 
-.card{
-  background:#1e293b;
-  padding:30px;
-  border-radius:15px;
+.content{
+  position:absolute;
+  top:40%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  color:white;
+  text-align:center;
+  font-family:Arial;
+  z-index:2;
+}
+
+h1{
+  font-size:4rem;
+  letter-spacing:-2px;
+}
+
+p{
   margin-top:20px;
+  opacity:0.7;
 }
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
-  <h2>KIROS</h2>
-  <button onclick="showSection('dashboard')">Dashboard</button>
-  <button onclick="showSection('scan')">Scan Food</button>
-  <button onclick="showSection('workout')">Workout Plan</button>
+<div class="content">
+  <h1>KIROS</h1>
+  <p>AI Nutrition Intelligence</p>
 </div>
 
-<div class="main">
-
-  <!-- DASHBOARD -->
-  <div id="dashboard" class="section active">
-    <h1>Today’s Overview</h1>
-    <div class="card">
-      <h3>Calories Today</h3>
-      <p>0 kcal</p>
-    </div>
-  </div>
-
-  <!-- SCAN FOOD -->
-  <div id="scan" class="section">
-    <h1>Scan Food</h1>
-    <input type="file" id="imageInput">
-    <img id="preview" width="250">
-    <br><br>
-    <button onclick="predict()">Analyze</button>
-    <div id="result"></div>
-  </div>
-
-  <!-- WORKOUT -->
-  <div id="workout" class="section">
-    <h1>Workout Plan</h1>
-    <button onclick="loadWorkout('leg')">Leg Day</button>
-    <button onclick="loadWorkout('chest')">Chest Day</button>
-
-    <div id="workoutResult" class="card"></div>
-  </div>
-
-</div>
-
-<!-- TensorFlow -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
-function showSection(id){
-  document.querySelectorAll(".section").forEach(sec=>{
-    sec.classList.remove("active");
-  });
-  document.getElementById(id).classList.add("active");
-}
+// Scene
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-/* AI Model */
-let model;
-async function loadModel(){
-  model = await mobilenet.load();
-  console.log("Model Loaded");
-}
-loadModel();
-
-document.getElementById("imageInput").addEventListener("change", function(event){
-  const reader = new FileReader();
-  reader.onload = function(){
-    document.getElementById("preview").src = reader.result;
-  }
-  reader.readAsDataURL(event.target.files[0]);
+// Geometry
+const geometry = new THREE.IcosahedronGeometry(2, 1);
+const material = new THREE.MeshStandardMaterial({
+  color:0x2563eb,
+  wireframe:false,
+  metalness:0.7,
+  roughness:0.2
 });
 
-async function predict(){
-  const img = document.getElementById("preview");
-  const predictions = await model.classify(img);
-  document.getElementById("result").innerText =
-    "Detected: " + predictions[0].className;
-}
+const sphere = new THREE.Mesh(geometry, material);
+scene.add(sphere);
 
-/* Workout Engine */
-const workoutPlans = {
-  leg:[
-    {name:"Squats", sets:4, reps:"8-10"},
-    {name:"Leg Press", sets:3, reps:"10-12"},
-    {name:"Hamstring Curl", sets:3, reps:"12-15"},
-    {name:"Calf Raises", sets:4, reps:"15-20"}
-  ],
-  chest:[
-    {name:"Bench Press", sets:4, reps:"6-8"},
-    {name:"Incline Dumbbell Press", sets:3, reps:"8-12"},
-    {name:"Cable Fly", sets:3, reps:"12-15"}
-  ]
-};
+// Light
+const light = new THREE.PointLight(0xffffff, 1);
+light.position.set(5,5,5);
+scene.add(light);
 
-function loadWorkout(day){
-  let output="";
-  workoutPlans[day].forEach(ex=>{
-    output += `<strong>${ex.name}</strong><br>
-               ${ex.sets} sets × ${ex.reps} reps<br><br>`;
-  });
-  document.getElementById("workoutResult").innerHTML = output;
+camera.position.z = 5;
+
+// Mouse Follow Effect
+document.addEventListener("mousemove", (event)=>{
+  let mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+  let mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  sphere.rotation.y = mouseX * 1.5;
+  sphere.rotation.x = mouseY * 1.5;
+});
+
+// Scroll Animation
+window.addEventListener("scroll", ()=>{
+  sphere.rotation.y += 0.05;
+});
+
+// Animation Loop
+function animate(){
+  requestAnimationFrame(animate);
+  sphere.rotation.x += 0.005;
+  sphere.rotation.y += 0.005;
+  renderer.render(scene, camera);
 }
+animate();
+
+// Resize
+window.addEventListener("resize", ()=>{
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+});
 </script>
 
 </body>
