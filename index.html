@@ -144,214 +144,220 @@
         </div>
     </section>
 
-    <script defer>
-        console.log("Starting FitLife 3D - THREE.js ready");
-
-        // GSAP Setup
+    <script>
+        // GSAP Setup (loaded early, no issues)
         gsap.registerPlugin(ScrollTrigger);
 
-        // Loading Screen
-        window.addEventListener('load', () => {
+        // Main Init - Wait for DOM + THREE ready
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM ready - Initializing FitLife 3D");
+
+            // Hide Loader after short delay (now safe)
             setTimeout(() => {
                 const loader = document.getElementById('loader');
                 loader.style.opacity = '0';
                 setTimeout(() => loader.style.display = 'none', 1000);
-            }, 2000);
-        });
+            }, 1500);
 
-        // Three.js Core Setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        const canvasContainer = document.getElementById('canvas-container');
-        canvasContainer.appendChild(renderer.domElement);
-        console.log("Renderer attached to DOM");
-
-        // Lighting
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-        const pointLight = new THREE.PointLight(0x00ffcc, 1, 100);
-        pointLight.position.set(10, 10, 10);
-        scene.add(pointLight);
-
-        camera.position.z = 30;
-
-        // Torus Knot (Main 3D Element)
-        const torusGeometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
-        const torusMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x00ffcc, 
-            emissive: 0x004466, 
-            emissiveIntensity: 0.3,
-            roughness: 0.2,
-            metalness: 0.8
-        });
-        const torusKnot = new THREE.Mesh(torusGeometry, torusMaterial);
-        scene.add(torusKnot);
-        console.log("Torus knot added to scene");
-
-        // Particles System
-        const particlesGeometry = new THREE.BufferGeometry();
-        const particlesCount = 5000;
-        const posArray = new Float32Array(particlesCount * 3);
-        for (let i = 0; i < particlesCount * 3; i++) {
-            posArray[i] = (Math.random() - 0.5) * 200;
-        }
-        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        const particlesMaterial = new THREE.PointsMaterial({ 
-            size: 0.02, 
-            color: 0x00ffcc, 
-            transparent: true, 
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending
-        });
-        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-        scene.add(particlesMesh);
-        console.log("Particles system added");
-
-        // Animation Loop
-        function animate() {
-            requestAnimationFrame(animate);
-            torusKnot.rotation.x += 0.005;
-            torusKnot.rotation.y += 0.01;
-            particlesMesh.rotation.y += 0.0005;
-            renderer.render(scene, camera);
-        }
-        animate();
-        console.log("3D Animation loop started - Check for glowing torus!");
-
-        // GSAP Scrollytelling Animations
-        gsap.to(camera.position, {
-            z: 10,
-            scrollTrigger: { 
-                trigger: "#hero", 
-                start: "top top", 
-                end: "bottom top", 
-                scrub: true 
+            // Three.js Setup (now guaranteed after CDN load)
+            if (typeof THREE === 'undefined') {
+                console.error("THREE.js failed to load - Check CDN");
+                return;
             }
-        });
 
-        gsap.to(torusKnot.position, {
-            y: -5,
-            scrollTrigger: { 
-                trigger: "#scanner", 
-                start: "top center", 
-                end: "bottom center", 
-                scrub: true 
-            }
-        });
-
-        gsap.to(particlesMesh.position, {
-            y: -10,
-            scrollTrigger: { 
-                trigger: "#workout", 
-                start: "top center", 
-                end: "bottom center", 
-                scrub: true 
-            }
-        });
-
-        // Section Reveals
-        gsap.utils.toArray('.section').forEach(section => {
-            gsap.from(section, { 
-                opacity: 0, 
-                y: 50, 
-                duration: 1, 
-                scrollTrigger: { 
-                    trigger: section, 
-                    start: "top 80%", 
-                    toggleActions: "play none none reverse" 
-                } 
-            });
-        });
-
-        // Navbar Scroll Effect
-        window.addEventListener('scroll', () => {
-            const navbar = document.getElementById('navbar');
-            if (window.pageYOffset > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        });
-
-        // Goal Selection
-        document.querySelectorAll('.goal-card').forEach(card => {
-            card.addEventListener('click', function() {
-                document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('selected'));
-                this.classList.add('selected');
-                generateWorkout();
-            });
-        });
-
-        // Food Scanner (Camera + Simulation)
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                document.getElementById('video').srcObject = stream;
-                console.log("Camera stream active");
-            })
-            .catch(err => console.log('Camera access denied:', err));
-
-        document.getElementById('scan-btn').addEventListener('click', () => {
-            gsap.to('#camera-feed', { scale: 1.05, duration: 0.2, yoyo: true, repeat: 1 });
-            setTimeout(() => {
-                const calories = Math.floor(Math.random() * 300 + 200);
-                const protein = Math.floor(Math.random() * 30 + 10);
-                const carbs = Math.floor(Math.random() * 40 + 20);
-                const fat = Math.floor(Math.random() * 20 + 5);
-                document.getElementById('calories').textContent = calories + ' cal';
-                document.getElementById('protein').textContent = protein + 'g';
-                document.getElementById('carbs').textContent = carbs + 'g';
-                document.getElementById('fat').textContent = fat + 'g';
-                document.querySelectorAll('.nutrient-fill').forEach((fill, i) => {
-                    gsap.to(fill, { width: (Math.random() * 80 + 20) + '%', duration: 1, delay: i * 0.2 });
-                });
-                // Animate torus on scan
-                gsap.to(torusKnot.scale, { x: 1.2, y: 1.2, z: 1.2, duration: 1, yoyo: true, repeat: 1 });
-            }, 500);
-        });
-
-        // Workout Planner Data
-        const workouts = {
-            chest: ['Bench Press 4x8', 'Incline Dumbbell Press 3x10', 'Cable Flyes 3x12', 'Push-ups 3xFailure'],
-            back: ['Deadlifts 4x6', 'Pull-ups 4x8', 'Barbell Rows 3x10', 'Lat Pulldowns 3x12'],
-            legs: ['Squats 4x8', 'Leg Press 3x12', 'Lunges 3x10 each', 'Calf Raises 4x15'],
-            shoulders: ['Military Press 4x8', 'Lateral Raises 3x12', 'Rear Delts 3x15', 'Shrugs 3x12'],
-            arms: ['Barbell Curls 4x10', 'Tricep Dips 3x12', 'Hammer Curls 3x12', 'Cable Pushdowns 3x15']
-        };
-
-        document.querySelectorAll('.day-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                const day = this.getAttribute('data-day');
-                generateWorkout(day);
-            });
-        });
-
-        function generateWorkout(day = 'chest') {
-            const list = document.getElementById('workout-list');
-            list.innerHTML = '';
-            workouts[day].forEach((exercise, index) => {
-                const card = document.createElement('div');
-                card.className = 'exercise-card';
-                card.innerHTML = `<span>${exercise}</span><span>⏱ Track</span>`;
-                list.appendChild(card);
-                gsap.from(card, { opacity: 0, x: -50, duration: 0.5, delay: index * 0.1 });
-            });
-            // Animate particles on generate
-            gsap.to(particlesMesh.rotation, { y: '+=' + Math.PI, duration: 2 });
-        }
-        generateWorkout(); // Initial load
-
-        // Window Resize Handler
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            const canvasContainer = document.getElementById('canvas-container');
+            canvasContainer.appendChild(renderer.domElement);
+            console.log("Renderer attached to DOM");
 
-        console.log("FitLife 3D fully loaded - All systems go!");
+            // Lighting
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const pointLight = new THREE.PointLight(0x00ffcc, 1, 100);
+            pointLight.position.set(10, 10, 10);
+            scene.add(pointLight);
+
+            camera.position.z = 30;
+
+            // Torus Knot (Main 3D Element)
+            const torusGeometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+            const torusMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x00ffcc, 
+                emissive: 0x004466, 
+                emissiveIntensity: 0.3,
+                roughness: 0.2,
+                metalness: 0.8
+            });
+            const torusKnot = new THREE.Mesh(torusGeometry, torusMaterial);
+            scene.add(torusKnot);
+            console.log("Torus knot added to scene");
+
+            // Particles System
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 5000;
+            const posArray = new Float32Array(particlesCount * 3);
+            for (let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 200;
+            }
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particlesMaterial = new THREE.PointsMaterial({ 
+                size: 0.02, 
+                color: 0x00ffcc, 
+                transparent: true, 
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            console.log("Particles system added");
+
+            // Animation Loop
+            function animate() {
+                requestAnimationFrame(animate);
+                torusKnot.rotation.x += 0.005;
+                torusKnot.rotation.y += 0.01;
+                particlesMesh.rotation.y += 0.0005;
+                renderer.render(scene, camera);
+            }
+            animate();
+            console.log("3D Animation loop started - Glowing torus should be visible now!");
+
+            // GSAP Scrollytelling Animations
+            gsap.to(camera.position, {
+                z: 10,
+                scrollTrigger: { 
+                    trigger: "#hero", 
+                    start: "top top", 
+                    end: "bottom top", 
+                    scrub: true 
+                }
+            });
+
+            gsap.to(torusKnot.position, {
+                y: -5,
+                scrollTrigger: { 
+                    trigger: "#scanner", 
+                    start: "top center", 
+                    end: "bottom center", 
+                    scrub: true 
+                }
+            });
+
+            gsap.to(particlesMesh.position, {
+                y: -10,
+                scrollTrigger: { 
+                    trigger: "#workout", 
+                    start: "top center", 
+                    end: "bottom center", 
+                    scrub: true 
+                }
+            });
+
+            // Section Reveals
+            gsap.utils.toArray('.section').forEach(section => {
+                gsap.from(section, { 
+                    opacity: 0, 
+                    y: 50, 
+                    duration: 1, 
+                    scrollTrigger: { 
+                        trigger: section, 
+                        start: "top 80%", 
+                        toggleActions: "play none none reverse" 
+                    } 
+                });
+            });
+
+            // Navbar Scroll Effect
+            window.addEventListener('scroll', () => {
+                const navbar = document.getElementById('navbar');
+                if (window.pageYOffset > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            });
+
+            // Goal Selection
+            document.querySelectorAll('.goal-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    generateWorkout();
+                });
+            });
+
+            // Food Scanner (Camera + Simulation)
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    document.getElementById('video').srcObject = stream;
+                    console.log("Camera stream active");
+                })
+                .catch(err => console.log('Camera access denied:', err));
+
+            document.getElementById('scan-btn').addEventListener('click', () => {
+                gsap.to('#camera-feed', { scale: 1.05, duration: 0.2, yoyo: true, repeat: 1 });
+                setTimeout(() => {
+                    const calories = Math.floor(Math.random() * 300 + 200);
+                    const protein = Math.floor(Math.random() * 30 + 10);
+                    const carbs = Math.floor(Math.random() * 40 + 20);
+                    const fat = Math.floor(Math.random() * 20 + 5);
+                    document.getElementById('calories').textContent = calories + ' cal';
+                    document.getElementById('protein').textContent = protein + 'g';
+                    document.getElementById('carbs').textContent = carbs + 'g';
+                    document.getElementById('fat').textContent = fat + 'g';
+                    document.querySelectorAll('.nutrient-fill').forEach((fill, i) => {
+                        gsap.to(fill, { width: (Math.random() * 80 + 20) + '%', duration: 1, delay: i * 0.2 });
+                    });
+                    // Animate torus on scan
+                    gsap.to(torusKnot.scale, { x: 1.2, y: 1.2, z: 1.2, duration: 1, yoyo: true, repeat: 1 });
+                }, 500);
+            });
+
+            // Workout Planner Data
+            const workouts = {
+                chest: ['Bench Press 4x8', 'Incline Dumbbell Press 3x10', 'Cable Flyes 3x12', 'Push-ups 3xFailure'],
+                back: ['Deadlifts 4x6', 'Pull-ups 4x8', 'Barbell Rows 3x10', 'Lat Pulldowns 3x12'],
+                legs: ['Squats 4x8', 'Leg Press 3x12', 'Lunges 3x10 each', 'Calf Raises 4x15'],
+                shoulders: ['Military Press 4x8', 'Lateral Raises 3x12', 'Rear Delts 3x15', 'Shrugs 3x12'],
+                arms: ['Barbell Curls 4x10', 'Tricep Dips 3x12', 'Hammer Curls 3x12', 'Cable Pushdowns 3x15']
+            };
+
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const day = this.getAttribute('data-day');
+                    generateWorkout(day);
+                });
+            });
+
+            function generateWorkout(day = 'chest') {
+                const list = document.getElementById('workout-list');
+                list.innerHTML = '';
+                workouts[day].forEach((exercise, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'exercise-card';
+                    card.innerHTML = `<span>${exercise}</span><span>⏱ Track</span>`;
+                    list.appendChild(card);
+                    gsap.from(card, { opacity: 0, x: -50, duration: 0.5, delay: index * 0.1 });
+                });
+                // Animate particles on generate
+                gsap.to(particlesMesh.rotation, { y: '+=' + Math.PI, duration: 2 });
+            }
+            generateWorkout(); // Initial load
+
+            // Window Resize Handler
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            console.log("FitLife 3D fully loaded - All systems operational!");
+        });
     </script>
 </body>
 </html>
