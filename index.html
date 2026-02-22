@@ -57,9 +57,14 @@
         .float-animation { animation: float3d 6s ease-in-out infinite; }
         @keyframes float3d { 0%, 100% { transform: translateY(0) rotateX(0) rotateY(0); } 25% { transform: translateY(-20px) rotateX(5deg) rotateY(5deg); } 75% { transform: translateY(10px) rotateX(-5deg) rotateY(-5deg); } }
     </style>
-    <!-- Latest Stable CDNs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r165/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.165.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <!-- Three.js core (latest stable via cdnjs) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r183/three.min.js"></script>
+
+    <!-- GLTFLoader (modern path via jsDelivr) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.183.0/examples/jsm/loaders/GLTFLoader.min.js"></script>
+
+    <!-- GSAP + ScrollTrigger -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 </head>
@@ -70,6 +75,7 @@
             <h2>Initializing 3D Experience...</h2>
         </div>
     </div>
+
     <nav id="navbar">
         <div class="nav-container">
             <div class="logo">FitLife AI</div>
@@ -81,6 +87,7 @@
             </ul>
         </div>
     </nav>
+
     <section id="hero">
         <div id="canvas-container"></div>
         <div class="hero-content float-animation">
@@ -89,6 +96,7 @@
             <a href="#scanner" class="cta-button">Get Started</a>
         </div>
     </section>
+
     <section class="section" id="goals">
         <h2 class="section-title">Choose Your Goal</h2>
         <div class="goal-selector">
@@ -96,6 +104,7 @@
             <div class="goal-card" data-goal="gain"><h3>Muscle Gain</h3><p>Build strength and size</p></div>
         </div>
     </section>
+
     <section id="scanner" class="section">
         <h2 class="section-title float-animation">AI Food Scanner</h2>
         <div id="food-scanner">
@@ -114,6 +123,7 @@
             </div>
         </div>
     </section>
+
     <section id="dashboard" class="section">
         <h2 class="section-title float-animation">Your Progress</h2>
         <div class="dashboard-grid">
@@ -122,6 +132,7 @@
             <div class="stat-card"><h3>Progress</h3><div class="stat-value">-3.2 lbs</div><p>This Week</p></div>
         </div>
     </section>
+
     <section id="workout" class="section">
         <h2 class="section-title float-animation">AI Workout Planner</h2>
         <div class="workout-planner">
@@ -135,8 +146,10 @@
             <div id="workout-list"></div>
         </div>
     </section>
-    <script>
-        console.log('THREE.js Loaded'); // Debug log
+
+    <script defer>
+        console.log("Scripts loaded - starting Three.js");
+
         gsap.registerPlugin(ScrollTrigger);
 
         // Loading Screen
@@ -147,101 +160,70 @@
             }, 2000);
         });
 
-        // 3D Setup - Simplified
+        // Three.js Setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Perf boost
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.getElementById('canvas-container').appendChild(renderer.domElement);
-        console.log('Renderer attached'); // Debug
+        console.log("Renderer attached");
 
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-        scene.add(ambientLight);
+        // Lights
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
         const pointLight = new THREE.PointLight(0x00ffcc, 1, 100);
         pointLight.position.set(10, 10, 10);
         scene.add(pointLight);
 
         camera.position.z = 30;
 
-        // Torus Knot - Main 3D Element
+        // Torus Knot
         const torusGeometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
-        const torusMaterial = new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x004466, emissiveIntensity: 0.3 });
+        const torusMaterial = new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x004466 });
         const torusKnot = new THREE.Mesh(torusGeometry, torusMaterial);
         scene.add(torusKnot);
-        console.log('Torus added');
+        console.log("Torus added");
 
-        // Particles for Background
+        // Particles
         const particlesGeometry = new THREE.BufferGeometry();
         const particlesCount = 5000;
         const posArray = new Float32Array(particlesCount * 3);
         for (let i = 0; i < particlesCount * 3; i++) posArray[i] = (Math.random() - 0.5) * 200;
         particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        const particlesMaterial = new THREE.PointsMaterial({ size: 0.02, color: 0x00ffcc, transparent: true, opacity: 0.8 });
+        const particlesMaterial = new THREE.PointsMaterial({ size: 0.02, color: 0x00ffcc });
         const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
         scene.add(particlesMesh);
 
-        // Optional GLTF Loaders (no crash if missing)
-        const gltfLoader = new THREE.GLTFLoader();
-        let foodModel, workoutModel;
-        try {
-            gltfLoader.load('apple.gltf', (gltf) => {
-                foodModel = gltf.scene;
-                foodModel.scale.set(5, 5, 5);
-                foodModel.position.set(20, 0, -50);
-                foodModel.visible = false;
-                scene.add(foodModel);
-            });
-            gltfLoader.load('dumbbell.gltf', (gltf) => {
-                workoutModel = gltf.scene;
-                workoutModel.scale.set(3, 3, 3);
-                workoutModel.position.set(-20, 0, -50);
-                workoutModel.visible = false;
-                scene.add(workoutModel);
-            });
-        } catch (e) { console.log('Models optional, skipping:', e); }
-
-        // Animation Loop
+        // Animation loop
         function animate() {
             requestAnimationFrame(animate);
             torusKnot.rotation.x += 0.005;
             torusKnot.rotation.y += 0.01;
             particlesMesh.rotation.y += 0.0005;
-            if (foodModel) foodModel.rotation.y += 0.01;
-            if (workoutModel) workoutModel.rotation.y += 0.01;
             renderer.render(scene, camera);
         }
         animate();
-        console.log('Animation started');
+        console.log("Animation loop started");
 
-        // GSAP Scrollytelling - Simple Timelines
+        // GSAP Scroll Effects
         gsap.to(camera.position, {
             z: 10,
-            scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: 1 }
-        });
-        gsap.to(torusKnot.position, {
-            y: -5,
-            scrollTrigger: { trigger: "#scanner", start: "top center", end: "bottom center", scrub: 1,
-                onEnter: () => { if (foodModel) { foodModel.visible = true; gsap.to(foodModel.position, { x: 0, z: -10, duration: 2 }); } }
-            }
-        });
-        gsap.to(particlesMesh.position, {
-            y: -10,
-            scrollTrigger: { trigger: "#workout", start: "top center", end: "bottom center", scrub: 1,
-                onEnter: () => { if (workoutModel) { workoutModel.visible = true; gsap.to(workoutModel.position, { x: 0, z: -10, duration: 2 }); } }
-            }
+            scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: true }
         });
 
-        // Navbar Scroll
+        gsap.to(torusKnot.position, {
+            y: -5,
+            scrollTrigger: { trigger: "#scanner", start: "top center", end: "bottom center", scrub: true }
+        });
+
+        // Navbar scroll class
         window.addEventListener('scroll', () => {
-            const scrolled = window.pageYOffset;
             const navbar = document.getElementById('navbar');
-            if (scrolled > 50) navbar.classList.add('scrolled');
+            if (window.pageYOffset > 50) navbar.classList.add('scrolled');
             else navbar.classList.remove('scrolled');
         });
 
-        // Goal Selection
+        // Goal cards
         document.querySelectorAll('.goal-card').forEach(card => {
             card.addEventListener('click', function() {
                 document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('selected'));
@@ -250,30 +232,25 @@
             });
         });
 
-        // Food Scanner
+        // Camera access
         navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
             document.getElementById('video').srcObject = stream;
-        }).catch(err => console.log('Camera denied:', err));
+        }).catch(err => console.log('Camera access denied:', err));
 
+        // Scan simulation
         document.getElementById('scan-btn').addEventListener('click', () => {
-            gsap.to('#camera-feed', { scale: 1.05, duration: 0.2, yoyo: true, repeat: 1 });
             setTimeout(() => {
-                const calories = Math.floor(Math.random() * 300 + 200);
-                const protein = Math.floor(Math.random() * 30 + 10);
-                const carbs = Math.floor(Math.random() * 40 + 20);
-                const fat = Math.floor(Math.random() * 20 + 5);
-                document.getElementById('calories').textContent = calories + ' cal';
-                document.getElementById('protein').textContent = protein + 'g';
-                document.getElementById('carbs').textContent = carbs + 'g';
-                document.getElementById('fat').textContent = fat + 'g';
-                document.querySelectorAll('.nutrient-fill').forEach((fill, i) => {
-                    gsap.to(fill, { width: (Math.random() * 80 + 20) + '%', duration: 1, delay: i * 0.2 });
+                document.getElementById('calories').textContent = Math.floor(Math.random() * 300 + 200) + ' cal';
+                document.getElementById('protein').textContent = Math.floor(Math.random() * 30 + 10) + 'g';
+                document.getElementById('carbs').textContent = Math.floor(Math.random() * 40 + 20) + 'g';
+                document.getElementById('fat').textContent = Math.floor(Math.random() * 20 + 5) + 'g';
+                document.querySelectorAll('.nutrient-fill').forEach(bar => {
+                    bar.style.width = Math.random() * 80 + 20 + '%';
                 });
-                if (foodModel) gsap.to(foodModel.scale, { x: 7, y: 7, z: 7, duration: 1, yoyo: true, repeat: 1 });
-            }, 500);
+            }, 1500);
         });
 
-        // Workout Generator
+        // Workout data
         const workouts = {
             chest: ['Bench Press 4x8', 'Incline Dumbbell Press 3x10', 'Cable Flyes 3x12', 'Push-ups 3xFailure'],
             back: ['Deadlifts 4x6', 'Pull-ups 4x8', 'Barbell Rows 3x10', 'Lat Pulldowns 3x12'],
@@ -281,38 +258,32 @@
             shoulders: ['Military Press 4x8', 'Lateral Raises 3x12', 'Rear Delts 3x15', 'Shrugs 3x12'],
             arms: ['Barbell Curls 4x10', 'Tricep Dips 3x12', 'Hammer Curls 3x12', 'Cable Pushdowns 3x15']
         };
+
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-                const day = this.getAttribute('data-day');
-                generateWorkout(day);
+                generateWorkout(this.getAttribute('data-day'));
             });
         });
+
         function generateWorkout(day = 'chest') {
             const list = document.getElementById('workout-list');
             list.innerHTML = '';
-            workouts[day].forEach((exercise, index) => {
+            workouts[day].forEach(ex => {
                 const card = document.createElement('div');
                 card.className = 'exercise-card';
-                card.innerHTML = `<span>${exercise}</span><span>⏱ Track</span>`;
+                card.innerHTML = `<span>${ex}</span><span>⏱ Track</span>`;
                 list.appendChild(card);
-                gsap.from(card, { opacity: 0, x: -50, duration: 0.5, delay: index * 0.1 });
             });
-            if (workoutModel) gsap.to(workoutModel.rotation, { y: '+=' + Math.PI * 2, duration: 2 });
         }
         generateWorkout();
 
-        // Resize
+        // Resize handler
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Section Reveals
-        gsap.utils.toArray('.section').forEach(section => {
-            gsap.from(section, { opacity: 0, y: 50, duration: 1, scrollTrigger: { trigger: section, start: "top 80%", toggleActions: "play none none reverse" } });
         });
     </script>
 </body>
