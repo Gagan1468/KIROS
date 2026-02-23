@@ -8,36 +8,20 @@
   <style>
     body {
       margin: 0;
-      font-family: system-ui, sans-serif;
       background: #000;
-      color: white;
       height: 100vh;
       overflow: hidden;
+      font-family: system-ui, sans-serif;
     }
-
     #container {
       height: 100%;
-      display: flex;
-      flex-direction: column;
       position: relative;
     }
-
-    #video-container {
-      flex: 1;
-      background: #111;
-      position: relative;
-    }
-
     video {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-
-    #canvas {
-      display: none;
-    }
-
     #controls {
       position: absolute;
       bottom: 30px;
@@ -47,9 +31,8 @@
       gap: 20px;
       z-index: 10;
     }
-
     button {
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,255,204,0.2);
       border: 2px solid #00ffcc;
       color: #00ffcc;
       font-size: 1.1rem;
@@ -59,13 +42,11 @@
       backdrop-filter: blur(6px);
       transition: 0.3s;
     }
-
     button:hover {
       background: #00ffcc;
       color: black;
       transform: scale(1.08);
     }
-
     #result {
       position: absolute;
       bottom: 120px;
@@ -80,23 +61,20 @@
       text-align: center;
       display: none;
       border: 1px solid #00ffcc33;
+      color: white;
     }
-
     #result h2 {
       margin: 0 0 16px;
       color: #00ffcc;
       font-size: 1.7rem;
     }
-
     .nutrient {
       margin: 10px 0;
       font-size: 1.2rem;
     }
-
     .verdict.good  { color: #00ffcc; font-weight: bold; font-size: 1.5rem; margin-top: 20px; }
     .verdict.moderate { color: #ffcc00; font-weight: bold; font-size: 1.5rem; margin-top: 20px; }
     .verdict.bad   { color: #ff3366; font-weight: bold; font-size: 1.5rem; margin-top: 20px; }
-
     #loading {
       position: absolute;
       inset: 0;
@@ -109,28 +87,12 @@
       z-index: 20;
       display: none;
     }
-
-    #error {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(255,0,0,0.7);
-      padding: 20px 40px;
-      border-radius: 12px;
-      font-size: 1.3rem;
-      display: none;
-      z-index: 30;
-    }
   </style>
 </head>
 <body>
 
 <div id="container">
-  <div id="video-container">
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="canvas"></canvas>
-  </div>
+  <video id="video" autoplay playsinline muted></video>
 
   <div id="controls">
     <button id="flip">Flip Camera</button>
@@ -147,38 +109,31 @@
   </div>
 
   <div id="loading">Scanning food...</div>
-  <div id="error">Error: Could not analyze</div>
 </div>
 
 <script>
   const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
   const loading = document.getElementById('loading');
   const result = document.getElementById('result');
-  const errorDiv = document.getElementById('error');
   const flipBtn = document.getElementById('flip');
   const scanBtn = document.getElementById('scan');
 
-  let currentFacingMode = 'environment'; // back camera
+  let currentFacingMode = 'environment'; // back camera by default
   let stream = null;
 
-  // Start camera
+  // Start camera (no visible error message)
   async function startCamera() {
-    errorDiv.style.display = 'none';
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
     }
-
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: currentFacingMode }
       });
       video.srcObject = stream;
     } catch (err) {
-      errorDiv.textContent = "Camera access denied or not available";
-      errorDiv.style.display = 'block';
-      console.error(err);
+      // No message on screen - camera blank rahega
+      console.log("Camera access failed:", err);
     }
   }
 
@@ -188,40 +143,31 @@
     startCamera();
   };
 
-  // Scan → capture + send to your API
+  // Scan button - capture frame + fake/real API call
   scanBtn.onclick = async () => {
     loading.style.display = 'flex';
     result.style.display = 'none';
-    errorDiv.style.display = 'none';
 
-    // Capture current frame
+    const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.getContext('2d').drawImage(video, 0, 0);
 
-    // Convert to base64 (for API)
     const imageBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
     try {
-      // Yahan tera real API endpoint daal dena
+      // Yeh line change kar dena apne real API ke hisaab se
       const response = await fetch('https://your-api-endpoint.com/analyze-food', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Agar API key chahiye to yahan daal dena
-          // 'Authorization': 'Bearer YOUR_API_KEY'
-        },
-        body: JSON.stringify({
-          image: imageBase64,
-          // optional: user_id, goal, etc.
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageBase64 })
       });
 
-      if (!response.ok) throw new Error('API error');
+      if (!response.ok) throw new Error('API failed');
 
       const data = await response.json();
 
-      // Data format jo tune bola tha
+      // Real data update
       document.getElementById('food-name').textContent = data.food_name || "Detected Food";
       document.getElementById('cal').textContent = data.calories || "—";
       document.getElementById('prot').textContent = data.protein_g || "—";
@@ -236,29 +182,21 @@
         verdictEl.textContent = "⚠️ Okay in moderation";
         verdictEl.className = "verdict moderate";
       } else {
-        verdictEl.textContent = "❌ Better to avoid or limit";
+        verdictEl.textContent = "❌ Better to avoid";
         verdictEl.className = "verdict bad";
       }
 
       result.style.display = 'block';
     } catch (err) {
-      errorDiv.textContent = "Could not analyze food. Try again.";
-      errorDiv.style.display = 'block';
-      console.error(err);
+      // No visible error - sirf console mein
+      console.error("Scan failed:", err);
     } finally {
       loading.style.display = 'none';
     }
   };
 
-  // Start on load
+  // Auto start camera
   startCamera();
-
-  // Handle permission denied
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .catch(() => {
-      errorDiv.textContent = "Camera permission is required to scan food.";
-      errorDiv.style.display = 'block';
-    });
 </script>
 </body>
 </html>
