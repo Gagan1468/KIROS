@@ -138,12 +138,11 @@
     <div id="verdict" class="verdict"></div>
   </div>
 
-  <div id="loading">Scanning food...</div>
+  <div id="loading">Scanning...</div>
 
-  <!-- Prompt for food name (since free Spoonacular doesn't do image recognition) -->
   <div id="prompt">
-    <h3>Enter food name (from camera view)</h3>
-    <input type="text" id="foodInput" placeholder="e.g. grilled chicken breast">
+    <h3>Food name from camera</h3>
+    <input type="text" id="foodInput" placeholder="e.g. grilled chicken or cucumber">
     <button id="analyzeBtn">Analyze</button>
   </div>
 </div>
@@ -167,8 +166,7 @@
       });
       video.srcObject = stream;
     } catch (err) {
-      // Silent fail - no message on screen
-      console.log("Camera access failed:", err);
+      console.log("Camera failed:", err);
     }
   }
 
@@ -178,13 +176,11 @@
   };
 
   document.getElementById('scan').onclick = () => {
-    // Show prompt instead of direct API (free tier limitation)
     promptDiv.style.display = 'block';
     loading.style.display = 'none';
     result.style.display = 'none';
   };
 
-  // Analyze with Spoonacular when user enters food name
   analyzeBtn.onclick = async () => {
     const query = foodInput.value.trim();
     if (!query) return alert("Enter food name!");
@@ -199,18 +195,19 @@
 
       const data = await response.json();
 
+      // Spoonacular response parsing (real keys)
       document.getElementById('food-name').textContent = query.charAt(0).toUpperCase() + query.slice(1);
-      document.getElementById('cal').textContent = data.calories || "—";
-      document.getElementById('prot').textContent = data.protein || "—";
-      document.getElementById('fat').textContent = data.fat || "—";
-      document.getElementById('carb').textContent = data.carbs || "—";
+      document.getElementById('cal').textContent = data.calories.value || "—";
+      document.getElementById('prot').textContent = data.protein.value || "—";
+      document.getElementById('fat').textContent = data.fat.value || "—";
+      document.getElementById('carb').textContent = data.carbs.value || "—";
 
-      // Simple verdict logic (customize as needed)
       const verdictEl = document.getElementById('verdict');
-      if (data.calories < 300) {
+      const cal = data.calories.value || 0;
+      if (cal < 300) {
         verdictEl.textContent = "✅ You can eat this!";
         verdictEl.className = "verdict good";
-      } else if (data.calories < 600) {
+      } else if (cal < 600) {
         verdictEl.textContent = "⚠️ Okay in moderation";
         verdictEl.className = "verdict moderate";
       } else {
@@ -221,13 +218,13 @@
       result.style.display = 'block';
     } catch (err) {
       console.error(err);
-      alert("Could not analyze. Try again or check API key.");
+      alert("Could not analyze. Try again.");
     } finally {
       loading.style.display = 'none';
     }
   };
 
-  // Auto start camera (no visible errors)
+  // Auto start
   startCamera();
 </script>
 </body>
